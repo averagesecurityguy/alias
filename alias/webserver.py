@@ -2,7 +2,6 @@
 
 import flask
 
-import alias.config
 import alias.lookup
 import alias.db
 
