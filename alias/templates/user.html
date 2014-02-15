@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block data %}
+<h2>{{ username }}</h2>
+
+<h3>Names</h3>
+{% if data['names'] != [] %}
+	<ul>
+		{% for name in data['names'] %}
+			<li>{{ name.decode('utf-8') }}</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>Descriptions</h3>
+{% if data['descs'] != [] %}
+	<ul>
+		{% for desc in data['descs'] %}
+			<li>{{ desc.decode('utf-8') }}</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>Handles</h3>
+{% if data['nyms'] != [] %}
+	<ul>
+		{% for nym in data['nyms'] %}
+			<li>{{ nym.decode('utf-8') }}</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>Emails</h3>
+{% if data['emails'] != [] %}
+	<ul>
+		{% for email in data['emails'] %}
+			<li><a href="/email/{{ email }}">{{ email }}</a></li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>URLs</h3>
+{% if data['urls'] != [] %}
+	<ul>
+		{% for url in data['urls'] %}
+			<li><a href="{{ url.decode('utf-8') }}">{{ url.decode('utf-8') }}</a></li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>Locations</h3>
+{% if data['locs'] != [] %}
+	<ul>
+		{% for loc in data['locs'] %}
+			<li>{{ loc.decode('utf-8') }}</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+<h3>Images</h3>
+{% if data['images'] != [] %}
+	<ul>
+		{% for image in data['images'] %}
+			<li><img src="{{ image.decode('utf-8') }}" /></li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+{% endblock %}

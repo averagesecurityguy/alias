@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block data %}
+
+{% if (not keys) and (not emails) %}
+	<p>None of the emails have users associated with them. Try running the lookups.</p>
+{% else %}
+
+	{% if emails %}
+		<ul class="column4">
+		{% for email in emails %}
+			<li><a href="/email/{{ email }}">{{ email }}</a></li>
+		{% endfor %}
+	{% endif %}
+
+	{% if keys %}
+		<ul class="column12">
+		{% for key in keys %}
+	  		<li><a href="/emails/{{ key }}">{{ key }}</a></li>
+		{% endfor %}
+	{% endif %}
+{% endif %}
+
+	</ul>
+</div>
+{% endblock %}
