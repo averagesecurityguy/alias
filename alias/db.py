@@ -1,11 +1,22 @@
+# -*- coding: utf-8 -*-
+
 import re
+import redis
 
 import alias.config
 
 email_re = re.compile(r'.*@.*\..*')
 
-
 cfg = alias.config.AliasConfig()
+
+user_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.user_db)
+email_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.email_db)
+nym_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.nym_db)
+loc_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.loc_db)
+url_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.url_db)
+name_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.name_db)
+desc_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.desc_db)
+image_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.image_db)
 
 def get_email_directory():
     return sorted(set([i[:2] for i in cfg.email_db.keys('*@*.*')]))
