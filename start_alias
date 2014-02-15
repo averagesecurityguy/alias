@@ -6,6 +6,6 @@ echo '/usr/local/bin/redis-server conf/redis.conf &'
 echo $! > conf/redis.pid
 
 echo 'Starting Alias web server.'
-echo 'alias.py &'
-./alias.py &
+echo 'alias_server &'
+/usr/bin/env python alias_server &
 echo $! > conf/alias.pid
