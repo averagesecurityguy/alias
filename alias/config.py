@@ -1,19 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import json
-import redis
+import os
 
 class AliasConfig():
     def __init__(self, config_file):
-        self.config = self.__load_config(config_file)
-        self.user_db = redis.StrictRedis(host='localhost', port=6379, db=0)
-        self.email_db = redis.StrictRedis(host='localhost', port=6379, db=1)
-        self.nym_db = redis.StrictRedis(host='localhost', port=6379, db=2)
-        self.loc_db = redis.StrictRedis(host='localhost', port=6379, db=3)
-        self.url_db = redis.StrictRedis(host='localhost', port=6379, db=4)
-        self.name_db = redis.StrictRedis(host='localhost', port=6379, db=5)
-        self.desc_db = redis.StrictRedis(host='localhost', port=6379, db=6)
-        self.image_db = redis.StrictRedis(host='localhost', port=6379, db=7)
+        config_file = os.path.join('..', 'config', 'alias.config')
+        config = self.__load_config(config_file)
+
+        self.tw_consumer_key = config.get('tw_consumer_key', '')
+        self.tw_consumer_secret = config.get('tw_consumer_secret', '')
+        self.tw_token = config.get('tw_token', '')
+        self.tw_token_secret = config.get('tw_token_secret', '')
+        self.user_db = config.get('user_db')
+        self.email_db = config.get('email_db')
+        self.nym_db = config.get('nym_db')
+        self.loc_db = config.get('loc_db')
+        self.url_db = config.get('url_db')
+        self.name_db = config.get('name_db')
+        self.desc_db = config.get('desc_db')
+        self.image_db = config.get('image_db')
 
     def __load_config(self, filename):
         try:
@@ -21,15 +27,3 @@ class AliasConfig():
                 return json.loads(cfg.read())
         except:
             return None
-
-    def tw_consumer_key(self):
-        return self.config.get('tw_consumer_key')
-
-    def tw_consumer_secret(self):
-        return self.config.get('tw_consumer_secret')
-
-    def tw_token(self):
-        return self.config.get('tw_token')
-
-    def tw_token_secret(self):
-        return self.config.get('tw_token_secret')
