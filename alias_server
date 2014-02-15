@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import alias.webserver as server
 
-server.app.run()
+server.app.run(debug=True)
+# server.app.run()
