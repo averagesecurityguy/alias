@@ -4,8 +4,8 @@ import json
 import os
 
 class AliasConfig():
-    def __init__(self, config_file):
-        config_file = os.path.join('..', 'config', 'alias.config')
+    def __init__(self):
+        config_file = os.path.join('conf', 'alias.conf')
         config = self.__load_config(config_file)
 
         self.tw_consumer_key = config.get('tw_consumer_key', '')
