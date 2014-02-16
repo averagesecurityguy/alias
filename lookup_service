@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import time
-
-import alias.lookup
-
 # The lookup_server runs the lookup method of each module in the lookup
 # directory. The script then sleeps for three minutes before running each one
 # again.
 
-#-----------------------------------------------------------------------------
-# Main Program
-#-----------------------------------------------------------------------------
+import time
+
+import alias.lookup
+
 while True:
 	alias.lookup.gravatar.lookup()
 	alias.lookup.twitter.lookup()

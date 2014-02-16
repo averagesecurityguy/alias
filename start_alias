@@ -6,6 +6,11 @@ echo '/usr/local/bin/redis-server conf/redis.conf &'
 echo $! > conf/redis.pid
 
 echo 'Starting Alias web server.'
-echo 'alias_server &'
+echo '/usr/bin/env python alias_server &'
 /usr/bin/env python alias_server &
 echo $! > conf/alias.pid
+
+echo 'Starting lookup service.'
+echo '/usr/bin/env python lookup_service &'
+/usr/bin/env python lookup_service &
+echo $! > conf/lookup.pid

@@ -9,3 +9,8 @@ echo 'Stopping Redis server.'
 redis_pid=`cat conf/redis.pid`
 kill $redis_pid
 rm conf/redis.pid
+
+echo 'Stopping Lookup service.'
+lookup_pid=`cat conf/lookup.pid`
+kill $lookup_pid
+rm conf/lookup.pid
