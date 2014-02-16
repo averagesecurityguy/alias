@@ -18,8 +18,9 @@ class AliasConfig():
         self.loc_db = config.get('loc_db')
         self.url_db = config.get('url_db')
         self.name_db = config.get('name_db')
-        self.desc_db = config.get('desc_db')
+        self.about_db = config.get('about_db')
         self.image_db = config.get('image_db')
+        self.valid_sources = config.get('valid_sources')
 
     def __load_config(self, filename):
         try:

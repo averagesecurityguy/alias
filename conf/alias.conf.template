@@ -9,5 +9,6 @@
   "loc_db": 3,
   "url_db": 4,
   "name_db": 5,
-  "about_db": 6
+  "about_db": 6,
+  "valid_sources": ["gravatar", "twitter"]
 }

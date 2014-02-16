@@ -69,9 +69,9 @@ def lookup():
     tw = __get_twitter_connection(cfg)
     count = 0
     users = []
-    for t in alias.db.get_unchecked_targets('twitter'):
+    for target in alias.db.get_unchecked_targets('twitter', 'user'):
         count += 1
-        users.append(t['target'])
+        users.append(target)
 
         if len(users) == 100:
             results = None

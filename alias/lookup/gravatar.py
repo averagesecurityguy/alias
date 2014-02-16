@@ -217,9 +217,9 @@ def lookup():
     # Load targets from the database.
     count = 0
     print '[*] Loading screen names into queue.'
-    for t in alias.db.get_unchecked_targets('gravatar'):
+    for target in alias.db.get_unchecked_targets('gravatar', 'all'):
         count += 1
-        user_queue.put({'user': t['target'], 'gvuser': t['target']})
+        user_queue.put({'user': target, 'gvuser': target})
 
     print '[*] Loaded {0} targets into the queue.'.format(count)
 
