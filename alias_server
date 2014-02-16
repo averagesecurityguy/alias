@@ -2,5 +2,4 @@
 
 import alias.webserver as server
 
-server.app.run(debug=True)
-# server.app.run()
+server.app.run()
