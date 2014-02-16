@@ -41,24 +41,26 @@ def load_new_targets(targets):
     return count
 
 
-def get_targets_with_data(key=None):
+def get_all_targets():
     '''
-    Return a list of all users with data associated with the username or email
-    address.
+    Return a list of all targets.
     '''
-    if key is None:
-        keys = user_db.keys('*:data')
-    else:
-        keys = user_db.keys(key + '*:data')
+    targets = [user_db.hget(i, 'key') for i in user_db.keys('*')]
+    return targets
 
-    users = []
-    for key in keys:
-        u, j = key.split(':')
-        user_id = user_db.get(u)
-        user = user_db.hget(user_id, 'key')
-        users.append(user)
 
-    return users
+def get_targets_with_data():
+    '''
+    Return a list of all targets that have data associated with them.
+    '''
+    ids = set(email_db.keys('*'))
+    ids.union(nym_db.keys('*'), url_db.keys('*'))
+    ids.union(loc_db.keys('*'), name_db.keys('*'))
+    ids.union(desc_db.keys('*'), image_db.keys('*'))
+
+    targets = [user_db.hget(i, 'key') for i in ids]
+
+    return targets
 
 
 def add_new_target(target, key_type):
@@ -71,20 +73,55 @@ def add_new_target(target, key_type):
     data = {'key': target, 'type': key_type,
             'gravatar': None, 'twitter': None}
 
-    user_db.hmset('id:' + key_id, data)
-    user_db.set(target, 'id:' + key_id)
+    user_db.hmset(key_id, data)
+    user_db.set(target, key_id)
 
 
-def get_target_data(username):
-    user_id = user_db.get(username)
+def get_target_data(target):
+    tid = user_db.get(target)
     data = {}
 
-    data['emails'] = email_db.lrange(user_id, 0, -1)
-    data['nyms'] = nym_db.lrange(user_id, 0, -1)
-    data['urls'] = url_db.lrange(user_id, 0, -1)
-    data['locs'] = loc_db.lrange(user_id, 0, -1)
-    data['names'] = name_db.lrange(user_id, 0, -1)
-    data['descs'] = desc_db.lrange(user_id, 0, -1)
-    data['images'] = image_db.lrange(user_id, 0, -1)
+    data['emails'] = email_db.lrange(tid, 0, -1)
+    data['nyms'] = nym_db.lrange(tid, 0, -1)
+    data['urls'] = url_db.lrange(tid, 0, -1)
+    data['locs'] = loc_db.lrange(tid, 0, -1)
+    data['names'] = name_db.lrange(tid, 0, -1)
+    data['descs'] = desc_db.lrange(tid, 0, -1)
+    data['images'] = image_db.lrange(tid, 0, -1)
 
     return data
+
+
+def add_target_email(target, address):
+    tid = user_db.get(target)
+    email_db.lpush(tid, address.lower())
+
+
+def add_target_nym(target, nym):
+    tid = user_db.get(target)
+    nym_db.lpush(tid, nym)
+
+
+def add_target_url(target, url):
+    tid = user_db.get(target)
+    url_db.lpush(tid, url)
+
+
+def add_target_location(target, location):
+    tid = user_db.get(target)
+    loc_db.lpush(tid, location)
+
+
+def add_target_name(target, name):
+    tid = user_db.get(target)
+    name_db.lpush(tid, name)
+
+
+def add_target_description(target, desc):
+    tid = user_db.get(target)
+    desc_db.lpush(tid, desc)
+
+
+def add_target_image(target, url):
+    tid = user_db.get(target)
+    image_db.lpush(tid, url)

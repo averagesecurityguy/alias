@@ -3,11 +3,9 @@
 
 import requests
 import multiprocessing
-import json
-import os
-import sys
-import redis
 import Queue
+
+import alias.db
 
 #-----------------------------------------------------------------------------
 # Function Definitions
@@ -75,28 +73,34 @@ def get_nyms(ims):
     return nym_list
 
 
+def get_images(data):
+    '''
+    Pull any image links from the gravatar data.
+    '''
+    image_list = {}
+
+    if data.get('thumbnailUrl') is not None:
+        image_list[data['thumbnailUrl']] = 1
+
+    if data.get('profileBackground') is not None:
+        if data['profileBackground'].get('url') is not None:
+            image_list[data['profileBackground']['url']] = 1
+
+    if data.get('photos') is not None:
+        for u in data.get('photos'):
+            image_list[u['value']] = 1
+
+    return image_list.keys()
+
+
 def get_urls(data):
     '''
     Pull any urls from the gravatar data.
     '''
     url_list = {}
 
-    if data.get('profileUrl') is not None:
-        url_list[data['profileUrl']] = 1
-
-    if data.get('thumbnailUrl') is not None:
-        url_list[data['thumbnailUrl']] = 1
-
     if data.get('urls') is not None:
         for u in data.get('urls'):
-            url_list[u['value']] = 1
-
-    if data.get('profileBackground') is not None:
-        if data['profileBackground'].get('url') is not None:
-            url_list[data['profileBackground']['url']] = 1
-
-    if data.get('photos') is not None:
-        for u in data.get('photos'):
             url_list[u['value']] = 1
 
     return url_list.keys()
@@ -123,35 +127,30 @@ def process_results(result):
     data = result[1]['entry'][0]
 
     emails = get_emails(data.get('emails'), data.get('ims'))
-    for email in emails:
-        email_db.lpush(username + ':gravatar', email.lower())
-        email_db.lpush(email.lower(), username)
+    for email in sorted(set(emails)):
+        alias.db.add_target_email(username, email)
 
     nyms = get_nyms(data.get('ims'))
-    for nym in nyms:
-        nym_db.lpush(username + ':gravatar', nym.lower())
-        nym_db.lpush(nym.lower(), username)
+    for nym in sorted(set(nyms)):
+        alias.db.add_target_nym(username, nym)
     
     urls = get_urls(data)
-    for url in urls:
-        url_db.lpush(username + ':gravatar', url)
-        url_db.lpush(url, username)
+    for url in sorted(set(urls)):
+        alias.db.add_target_url(username, url)
 
     locations = get_locations(data.get('currentLocation'))
-    for loc in locations:
-        loc_db.lpush(username + ':gravatar', loc.lower())
-        loc_db.lpush(loc.lower(), username)
+    for loc in sorted(set(locations)):
+        alias.db.add_target_location(username, loc)
 
     names = get_names(data.get('name'))
-    for name in names:
-        name_db.lpush(username + ':gravatar', name.lower())
-        name_db.lpush(name.lower(), username)
+    for name in sorted(set(names)):
+        alias.db.add_target_name(username, name)
 
     descriptions = get_descriptions(data.get('aboutMe'))
     for desc in descriptions:
-        about_db.lpush(username + ':gravatar', desc)
+        alias.db.add_target_description(username, desc)
 
-    user_db.hset(username, 'gravatar', 1)
+    alias.db.mark_source_complete(username, 'gravatar')
 
 
 def worker(user_queue, result_queue):
@@ -207,46 +206,21 @@ def writer(result_queue):
             print '[*] Processed {0}'.format(count)
 
 
-def load_configuration(filename):
-    '''
-    Loads the JSON configuration file specified by filename.
-    '''
-    try:
-        with open(filename) as config_file:
-            return json.loads(config_file.read())
-    except Exception as e:
-        print '[-] Could not load configuration.'
-        print '[-] {0}'.format(e)
-        sys.exit(1)
-
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-cfg = load_configuration(os.path.join('conf', 'app.conf'))
-
-user_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['user_db'])
-email_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['email_db'])
-nym_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['nym_db'])
-url_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['url_db'])
-loc_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['loc_db'])
-name_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['name_db'])
-about_db = redis.StrictRedis(host='localhost', port=6379, db=cfg['about_db'])
-
 user_queue = multiprocessing.Queue()
 result_queue = multiprocessing.Queue()
 procs = []
 
-# Load screen names from a file.
-sn_count = 0
+# Load targets from the database.
+count = 0
 print '[*] Loading screen names into queue.'
-for user in user_db.keys('*'):
-    if user_db.hget(user, 'gravatar') == '1':
-        continue
-    
-    sn_count += 1
-    user_queue.put({'user': user, 'gvuser': user})
+for t in alias.db.get_unchecked_targets('gravatar'):
+    count += 1
+    user_queue.put({'user': t['target'], 'gvuser': t['target']})
 
-print '[*] Loaded {0} screen names into the queue.'.format(sn_count)
+print '[*] Loaded {0} targets into the queue.'.format(count)
 
 for i in range(4):
     p = multiprocessing.Process(target=worker, args=(user_queue,
@@ -263,4 +237,3 @@ w.start()
 # Wait for all worker processes to finish
 for p in procs:
     p.join()
-
