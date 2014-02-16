@@ -10,7 +10,7 @@ import alias.db
 #-----------------------------------------------------------------------------
 # Functions
 #-----------------------------------------------------------------------------
-def get_redirect(url):
+def __get_redirect(url):
     if url.startswith('https://t.co') or url.startswith('http://t.co'):
         resp = requests.get(url, allow_redirects=False)
         return resp.headers['location']
@@ -18,7 +18,7 @@ def get_redirect(url):
     return url
 
 
-def lookup_users(screen_names):
+def __lookup_users(tw, screen_names):
     try:
         return tw.user_lookup(screen_names)
     except alias.twitter.TwitterConnectionException:
@@ -27,7 +27,7 @@ def lookup_users(screen_names):
         return None
 
 
-def process_results(results):
+def __process_results(results):
     for user in results:
         username = user['screen_name'].lower()
 
@@ -45,7 +45,7 @@ def process_results(results):
 
         url = user.get('url')
         if (url is not None) and (url != ''):
-            url = get_redirect(url)
+            url = __get_redirect(url)
             alias.db.add_target_url(username, url)
 
         purl = user.get('profile_image_url')
@@ -55,7 +55,7 @@ def process_results(results):
         alias.db.mark_source_complete(username, 'twitter')
 
 
-def get_twitter_connection():
+def __get_twitter_connection(cfg):
     return alias.twitter.Twitter(cfg.tw_consumer_key, cfg.tw_consumer_secret,
                                  cfg.tw_token, cfg.tw_token_secret)
 
@@ -63,23 +63,24 @@ def get_twitter_connection():
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-cfg = alias.config.AliasConfig()
+def lookup():
+    cfg = alias.config.AliasConfig()
 
-tw = get_twitter_connection()
-count = 0
-users = []
-for t in alias.db.get_unchecked_targets('twitter'):
-    count += 1
-    users.append(t['target'])
+    tw = __get_twitter_connection(cfg)
+    count = 0
+    users = []
+    for t in alias.db.get_unchecked_targets('twitter'):
+        count += 1
+        users.append(t['target'])
 
-    if len(users) == 100:
-        results = None
-        while results is None:
-            results = lookup_users(users)
+        if len(users) == 100:
+            results = None
+            while results is None:
+                results = __lookup_users(tw, users)
 
-        process_results(results)
-        users = []
+            __process_results(results)
+            users = []
 
-    if count % 1000 == 0:
-        print 'Processed {0}'.format(count)
-        tw = get_twitter_connection()
+        if count % 1000 == 0:
+            print 'Processed {0}'.format(count)
+            tw = __get_twitter_connection(cfg)

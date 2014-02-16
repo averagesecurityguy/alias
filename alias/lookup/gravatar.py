@@ -10,7 +10,7 @@ import alias.db
 #-----------------------------------------------------------------------------
 # Function Definitions
 #-----------------------------------------------------------------------------
-def get_names(name):
+def __get_names(name):
     '''
     Get the formatted name if available, if not build the name from the given
     and family names.
@@ -30,7 +30,7 @@ def get_names(name):
     return name_list
 
 
-def get_locations(location):
+def __get_locations(location):
     '''
     Get the location data.
     '''
@@ -42,7 +42,7 @@ def get_locations(location):
     return locations
 
 
-def get_emails(emails, ims):
+def __get_emails(emails, ims):
     '''
     Pull any email addresses from the emails list and from the IMs list.
     '''
@@ -60,7 +60,7 @@ def get_emails(emails, ims):
     return email_list
 
 
-def get_nyms(ims):
+def __get_nyms(ims):
     '''
     Pull any additional usernames from the IMs list.
     '''
@@ -73,7 +73,7 @@ def get_nyms(ims):
     return nym_list
 
 
-def get_images(data):
+def __get_images(data):
     '''
     Pull any image links from the gravatar data.
     '''
@@ -93,7 +93,7 @@ def get_images(data):
     return image_list.keys()
 
 
-def get_urls(data):
+def __get_urls(data):
     '''
     Pull any urls from the gravatar data.
     '''
@@ -106,7 +106,7 @@ def get_urls(data):
     return url_list.keys()
 
 
-def get_descriptions(description):
+def __get_descriptions(description):
     '''
     Get the description data.
     '''
@@ -118,7 +118,7 @@ def get_descriptions(description):
     return descriptions
 
 
-def process_results(result):
+def __process_results(result):
     '''
     Get each of the data items we are looking for from the result and write
     them to the databases.
@@ -126,34 +126,34 @@ def process_results(result):
     username = result[0]
     data = result[1]['entry'][0]
 
-    emails = get_emails(data.get('emails'), data.get('ims'))
+    emails = __get_emails(data.get('emails'), data.get('ims'))
     for email in sorted(set(emails)):
         alias.db.add_target_email(username, email)
 
-    nyms = get_nyms(data.get('ims'))
+    nyms = __get_nyms(data.get('ims'))
     for nym in sorted(set(nyms)):
         alias.db.add_target_nym(username, nym)
     
-    urls = get_urls(data)
+    urls = __get_urls(data)
     for url in sorted(set(urls)):
         alias.db.add_target_url(username, url)
 
-    locations = get_locations(data.get('currentLocation'))
+    locations = __get_locations(data.get('currentLocation'))
     for loc in sorted(set(locations)):
         alias.db.add_target_location(username, loc)
 
-    names = get_names(data.get('name'))
+    names = __get_names(data.get('name'))
     for name in sorted(set(names)):
         alias.db.add_target_name(username, name)
 
-    descriptions = get_descriptions(data.get('aboutMe'))
+    descriptions = __get_descriptions(data.get('aboutMe'))
     for desc in descriptions:
         alias.db.add_target_description(username, desc)
 
     alias.db.mark_source_complete(username, 'gravatar')
 
 
-def worker(user_queue, result_queue):
+def __worker(user_queue, result_queue):
     '''
     Thread to lookup gravatar results.
     '''
@@ -182,7 +182,7 @@ def worker(user_queue, result_queue):
             result_queue.put((user['user'], resp.json()))
 
 
-def writer(result_queue):
+def __writer(result_queue):
     '''
     Thread to write Gravatar results to the database.
     '''
@@ -200,7 +200,7 @@ def writer(result_queue):
 
         # Process the result pulled from the queue
         if result is not None:
-            process_results(result)
+            __process_results(result)
 
         if count % 1000 == 0:
             print '[*] Processed {0}'.format(count)
@@ -209,31 +209,32 @@ def writer(result_queue):
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-user_queue = multiprocessing.Queue()
-result_queue = multiprocessing.Queue()
-procs = []
+def lookup():
+    user_queue = multiprocessing.Queue()
+    result_queue = multiprocessing.Queue()
+    procs = []
 
-# Load targets from the database.
-count = 0
-print '[*] Loading screen names into queue.'
-for t in alias.db.get_unchecked_targets('gravatar'):
-    count += 1
-    user_queue.put({'user': t['target'], 'gvuser': t['target']})
+    # Load targets from the database.
+    count = 0
+    print '[*] Loading screen names into queue.'
+    for t in alias.db.get_unchecked_targets('gravatar'):
+        count += 1
+        user_queue.put({'user': t['target'], 'gvuser': t['target']})
 
-print '[*] Loaded {0} targets into the queue.'.format(count)
+    print '[*] Loaded {0} targets into the queue.'.format(count)
 
-for i in range(4):
-    p = multiprocessing.Process(target=worker, args=(user_queue,
-                                                     result_queue))
-    procs.append(p)
-    p.start()
+    for i in range(4):
+        p = multiprocessing.Process(target=__worker, args=(user_queue,
+                                                         result_queue))
+        procs.append(p)
+        p.start()
 
 
-# Create a thread to write the results to the file.
-w = multiprocessing.Process(target=writer, args=(result_queue,))
-procs.append(w)
-w.start()
+    # Create a thread to write the results to the file.
+    w = multiprocessing.Process(target=__writer, args=(result_queue,))
+    procs.append(w)
+    w.start()
 
-# Wait for all worker processes to finish
-for p in procs:
-    p.join()
+    # Wait for all worker processes to finish
+    for p in procs:
+        p.join()
