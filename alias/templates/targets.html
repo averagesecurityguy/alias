@@ -1,22 +1,13 @@
 {% extends "base.html" %}
 {% block data %}
 
-{% if (not keys) and (not targets) %}
+{% if not targets %}
 	<p>None of the targets have data associated with them. Confirm whether the lookup service is running.</p>
 {% else %}
-	{% if targets %}
-		<ul class="column6">
-		{% for target in targets %}
-			<li><a href="/target/{{ target }}">{{ target }}</a></li>
-		{% endfor %}
-	{% endif %}
-
-	{% if keys %}
-		<ul class="column12">
-		{% for key in keys %}
-	  		<li><a href="/targets/{{ key }}">{{ key }}</a></li>
-		{% endfor %}
-	{% endif %}
+	<ul class="column6">
+	{% for target in targets %}
+		<li><a href="/target/{{ target }}">{{ target }}</a></li>
+	{% endfor %}
 
 {% endif %}
 

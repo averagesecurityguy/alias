@@ -16,20 +16,10 @@ def index():
     return flask.render_template('index.html')
 
 @app.route("/targets")
-@app.route("/targets/<key>")
-def targets(key=None):
-    if key is None:
-        keys = sorted(set([u[:2] for u in alias.db.get_targets_with_data()]))
+def targets():
+    targets = sorted(alias.db.get_targets_with_data())
 
-        if len(keys) == 0:
-            keys = None
-        
-        users = None
-    else:
-        keys = None
-        users = sorted(alias.db.get_targets_with_data(key))
-
-    return flask.render_template('targets.html', keys=keys, users=users)
+    return flask.render_template('targets.html', targets=targets)
     
 
 @app.route('/target/<key>')
