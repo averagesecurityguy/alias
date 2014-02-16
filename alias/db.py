@@ -18,18 +18,6 @@ name_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.name_db)
 desc_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.desc_db)
 image_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.image_db)
 
-def get_email_directory():
-    return sorted(set([i[:2] for i in email_db.keys('*@*.*')]))
-
-
-def get_emails_by_key(key):
-    return sorted(email_db.keys(key + '*@*.*'))
-
-
-def get_usernames_by_email(address):
-    ids = email_db.lrange(address, 0, -1)
-    return sorted(set([user_db.hget(i, 'key') for i in ids]))
-
 
 def load_new_targets(targets):
     # Make sure the key_id is available before adding data.
@@ -53,7 +41,7 @@ def load_new_targets(targets):
     return count
 
 
-def get_users_with_data(key=None):
+def get_targets_with_data(key=None):
     '''
     Return a list of all users with data associated with the username or email
     address.
@@ -87,7 +75,7 @@ def add_new_target(target, key_type):
     user_db.set(target, 'id:' + key_id)
 
 
-def get_user_data(username):
+def get_target_data(username):
     user_id = user_db.get(username)
     data = {}
 
