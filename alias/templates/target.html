@@ -2,8 +2,8 @@
 {% block data %}
 <h2>{{ username }}</h2>
 
-<h3>Names</h3>
 {% if data['names'] != [] %}
+<h3>Names</h3>
 	<ul>
 		{% for name in data['names'] %}
 			<li>{{ name.decode('utf-8') }}</li>
@@ -11,17 +11,17 @@
 	</ul>
 {% endif %}
 
+{% if data['abouts'] != [] %}
 <h3>Descriptions</h3>
-{% if data['descs'] != [] %}
 	<ul>
-		{% for desc in data['descs'] %}
-			<li>{{ desc.decode('utf-8') }}</li>
+		{% for about in data['abouts'] %}
+			<li>{{ about.decode('utf-8') }}</li>
 		{% endfor %}
 	</ul>
 {% endif %}
 
-<h3>Handles</h3>
 {% if data['nyms'] != [] %}
+<h3>Handles</h3>
 	<ul>
 		{% for nym in data['nyms'] %}
 			<li>{{ nym.decode('utf-8') }}</li>
@@ -29,8 +29,8 @@
 	</ul>
 {% endif %}
 
-<h3>Emails</h3>
 {% if data['emails'] != [] %}
+<h3>Emails</h3>
 	<ul>
 		{% for email in data['emails'] %}
 			<li><a href="/email/{{ email }}">{{ email }}</a></li>
@@ -38,8 +38,8 @@
 	</ul>
 {% endif %}
 
-<h3>URLs</h3>
 {% if data['urls'] != [] %}
+<h3>URLs</h3>
 	<ul>
 		{% for url in data['urls'] %}
 			<li><a href="{{ url.decode('utf-8') }}">{{ url.decode('utf-8') }}</a></li>
@@ -47,8 +47,8 @@
 	</ul>
 {% endif %}
 
-<h3>Locations</h3>
 {% if data['locs'] != [] %}
+<h3>Locations</h3>
 	<ul>
 		{% for loc in data['locs'] %}
 			<li>{{ loc.decode('utf-8') }}</li>
@@ -56,8 +56,8 @@
 	</ul>
 {% endif %}
 
-<h3>Images</h3>
 {% if data['images'] != [] %}
+<h3>Images</h3>
 	<ul>
 		{% for image in data['images'] %}
 			<li><img src="{{ image.decode('utf-8') }}" /></li>
