@@ -52,7 +52,10 @@ def __process_results(results):
         if (purl is not None) and (purl != ''):
             alias.db.add_target_image(username, purl)
 
-        alias.db.mark_source_complete(username, 'twitter')
+
+def __mark_complete(users):
+    for user in users:
+        alias.db.mark_source_complete(user, 'twitter')
 
 
 def __get_twitter_connection(cfg):
@@ -79,6 +82,7 @@ def lookup():
                 results = __lookup_users(tw, users)
 
             __process_results(results)
+            __mark_complete(users)
             users = []
 
         if count % 1000 == 0:
