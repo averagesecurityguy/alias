@@ -123,32 +123,34 @@ def __process_results(result):
     Get each of the data items we are looking for from the result and write
     them to the databases.
     '''
+
     username = result[0]
-    data = result[1]['entry'][0]
 
-    emails = __get_emails(data.get('emails'), data.get('ims'))
-    for email in sorted(set(emails)):
-        alias.db.add_target_email(username, email)
+    if result[1] is not None:
+        data = result[1]['entry'][0]
+        emails = __get_emails(data.get('emails'), data.get('ims'))
+        for email in sorted(set(emails)):
+            alias.db.add_target_email(username, email)
 
-    nyms = __get_nyms(data.get('ims'))
-    for nym in sorted(set(nyms)):
-        alias.db.add_target_nym(username, nym)
-    
-    urls = __get_urls(data)
-    for url in sorted(set(urls)):
-        alias.db.add_target_url(username, url)
+        nyms = __get_nyms(data.get('ims'))
+        for nym in sorted(set(nyms)):
+            alias.db.add_target_nym(username, nym)
+        
+        urls = __get_urls(data)
+        for url in sorted(set(urls)):
+            alias.db.add_target_url(username, url)
 
-    locations = __get_locations(data.get('currentLocation'))
-    for loc in sorted(set(locations)):
-        alias.db.add_target_location(username, loc)
+        locations = __get_locations(data.get('currentLocation'))
+        for loc in sorted(set(locations)):
+            alias.db.add_target_location(username, loc)
 
-    names = __get_names(data.get('name'))
-    for name in sorted(set(names)):
-        alias.db.add_target_name(username, name)
+        names = __get_names(data.get('name'))
+        for name in sorted(set(names)):
+            alias.db.add_target_name(username, name)
 
-    descriptions = __get_descriptions(data.get('aboutMe'))
-    for desc in descriptions:
-        alias.db.add_target_description(username, desc)
+        descriptions = __get_descriptions(data.get('aboutMe'))
+        for desc in descriptions:
+            alias.db.add_target_description(username, desc)
 
     alias.db.mark_source_complete(username, 'gravatar')
 
@@ -169,11 +171,11 @@ def __worker(user_queue, result_queue):
         url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
         resp = requests.get(url, allow_redirects=False)
         if resp.status_code == 404:
-            result_queue.put(None)
+            result_queue.put((user['user'], None))
         elif resp.status_code == 302:
             location = resp.headers['location']
             if location == '/profiles/no-such-user':
-                result_queue.put(None)
+                result_queue.put((user['user'], None))
 
             if not location.startswith('http://en.gravatar.com'):
                 user['gvuser'] = location.lstrip('/').lower()
@@ -199,8 +201,7 @@ def __writer(result_queue):
             return
 
         # Process the result pulled from the queue
-        if result is not None:
-            __process_results(result)
+        __process_results(result)
 
         if count % 1000 == 0:
             print '[*] Processed {0}'.format(count)
@@ -218,6 +219,7 @@ def lookup():
     count = 0
     print '[*] Loading screen names into queue.'
     for target in alias.db.get_unchecked_targets('gravatar', 'all'):
+        print target
         count += 1
         user_queue.put({'user': target, 'gvuser': target})
 
