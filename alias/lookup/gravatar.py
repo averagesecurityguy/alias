@@ -21,11 +21,11 @@ def __get_names(name):
         return name_list
 
     if name.get('formatted') is not None:
-        name_list.append(name['formatted'])
+        name_list.append(unicode(name['formatted']))
     else:
-        given = name.get('givenName')
-        family = name.get('familyName')
-        name_list.append('{0} {1}'.format(given, family).strip())
+        given = name.get('givenName', u'')
+        family = name.get('familyName', u'')
+        name_list.append(u'{0} {1}'.format(given, family).strip())
 
     return name_list
 
