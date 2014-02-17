@@ -23,8 +23,8 @@ def __get_names(name):
     if name.get('formatted') is not None:
         name_list.append(name['formatted'])
     else:
-        given = name.get('given')
-        family = name.get('family')
+        given = name.get('givenName')
+        family = name.get('familyName')
         name_list.append('{0} {1}'.format(given, family).strip())
 
     return name_list
@@ -219,7 +219,6 @@ def lookup():
     count = 0
     print '[*] Loading screen names into queue.'
     for target in alias.db.get_unchecked_targets('gravatar', 'all'):
-        print target
         count += 1
         user_queue.put({'user': target, 'gvuser': target})
 
