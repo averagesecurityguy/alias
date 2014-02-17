@@ -79,11 +79,11 @@ def get_targets_with_data():
     '''
     Return a list of all targets that have data associated with them.
     '''
-    # Create a set of all the ids in each 
+    # Create a set of all the ids in each database
     ids = set(email_db.keys('id:*'))
-    ids.union(nym_db.keys('id:*'), url_db.keys('id:*'))
-    ids.union(loc_db.keys('id:*'), name_db.keys('id:*'))
-    ids.union(about_db.keys('id:*'), image_db.keys('id:*'))
+    ids = ids.union(nym_db.keys('id:*'), url_db.keys('id:*'))
+    ids = ids.union(loc_db.keys('id:*'), name_db.keys('id:*'))
+    ids = ids.union(about_db.keys('id:*'), image_db.keys('id:*'))
 
     targets = [user_db.hget(i, 'key') for i in ids]
 
