@@ -108,11 +108,12 @@ def add_new_target(target, key_type):
 
 def mark_source_complete(target, source):
     '''
-    Change the value of the specified source from None to 1 to indicate that
+    Change the value of the specified source from 0 to 1 to indicate that
     this source has been checked for this user.
     '''
-    tid = user_db.get(target)
-    user_db.hset(tid, source, '1')
+    if source in cfg.valid_sources:
+        tid = user_db.get(target)
+        user_db.hset(tid, source, '1')
 
 
 def get_target_data(target):
