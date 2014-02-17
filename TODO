@@ -1,0 +1,8 @@
+To Do List
+==========
+* Add logging throughout.
+* When launcing alias_server, lookup_service, and redis_server, make stdout and stderr go to /dev/null
+* Add lookup for Github
+* Add lookup for About.me
+* Add lookup for IM services, if possible.
+
