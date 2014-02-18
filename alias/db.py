@@ -16,12 +16,12 @@ url_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.url_db)
 name_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.name_db)
 about_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.about_db)
 image_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.image_db)
-
+admin_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.admin_db)
 
 def load_new_targets(targets):
     # Make sure the key_id is available before adding data.
-    if user_db.get('key_id') is None:
-        user_db.set('key_id', 1)
+    if admin_db.get('key_id') is None:
+        admin_db.set('key_id', 1)
 
     # Add usernames and email addresses.
     count = 0
@@ -94,8 +94,8 @@ def add_new_target(target, key_type):
     '''
     Adds a new target to the database.
     '''
-    key_id = user_db.get('key_id')
-    user_db.incr('key_id')
+    key_id = admin_db.get('key_id')
+    admin_db.incr('key_id')
 
     data = {'key': target, 'type': key_type}
     for source in cfg.valid_sources:
@@ -114,6 +114,25 @@ def mark_source_complete(target, source):
     if source in cfg.valid_sources:
         tid = user_db.get(target)
         user_db.hset(tid, source, '1')
+
+
+def add_target_to_source_list(target, source):
+    '''
+    Add target to the list of other targets with data from the specified
+    source.
+    '''
+    if source in cfg.valid_sources:
+        tid = user_db.get(target)
+        admin_db.lpush(source, tid)
+
+
+def get_targets_from_source(source):
+    '''
+    Return all targets with data from the specified source.
+    '''
+    if source in cfg.valid_sources:
+        tids = admin_db.lrange(source, 0, -1)
+        return [user_db.hget(tid, 'key') for tid in tids]
 
 
 def get_target_data(target):

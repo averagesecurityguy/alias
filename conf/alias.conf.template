@@ -11,5 +11,7 @@
   "url_db": 4,
   "name_db": 5,
   "about_db": 6,
-  "valid_sources": ["gravatar", "twitter"]
+  "image_db": 7,
+  "admin_db": 8,
+  "valid_sources": ["gravatar", "twitter", "github"]
 }

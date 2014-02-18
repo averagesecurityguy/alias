@@ -58,6 +58,18 @@ def get_targets_with_nym(nym):
 
     return flask.render_template('same_nym.html', targets=targets)
 
+
+@app.route('/source/<source>')
+def get_targets_from_source(source):
+    '''
+    Get list of targets with data from the specified source.
+    '''
+    targets = alias.db.get_targets_from_source(source)
+
+    return flask.render_template('source.html', source=source,
+                                                targets=targets)
+
+
 @app.route('/load', methods=['GET', 'POST'])
 def load():
     message = None

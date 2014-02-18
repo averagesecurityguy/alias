@@ -52,6 +52,9 @@ def __process_results(results):
         if (purl is not None) and (purl != ''):
             alias.db.add_target_image(username, purl)
 
+        # If we have valid data add this target to the twitter source list
+        alias.db.add_target_to_source_list(username, 'twitter')
+
 
 def __mark_complete(users):
     for user in users:

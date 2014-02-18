@@ -62,6 +62,9 @@ def __process_results(result):
         if (bio is not None) and (bio != ''):
             alias.db.add_target_description(username, bio)
 
+        # If we have valid data add this target to the gravatar source list
+        alias.db.add_target_to_source_list(username, 'gravatar')
+        
     alias.db.mark_source_complete(username, 'github')
 
 
