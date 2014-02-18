@@ -78,11 +78,18 @@ def __worker(user_queue, result_queue, key):
             print '[-] User queue is empty, quitting.'
             return
 
+        # Lookup user
         url = 'https://api.github.com/users/{0}'.format(user)
-        auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')
+        auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')        
         resp = requests.get(url, auth=auth)
+
+        # Ensure we haven't hit our rate limit.
+        if resp.headers['X-RateLimit-Remaining'] == '0':
+            print '[-] Rate limit exceeded. Finished for now.'
+            return
+
+        # If we have not hit our rate limit then add the result to the queue.
         result_queue.put((user, resp.json()))
-        time.sleep(1)
 
 
 def __writer(result_queue):
@@ -127,6 +134,7 @@ def lookup():
 
     print '[*] Loaded {0} targets into the queue.'.format(count)
 
+    # Create lookup threads.
     for i in range(4):
         p = multiprocessing.Process(target=__worker, args=(user_queue,
                                                            result_queue,
