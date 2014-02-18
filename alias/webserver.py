@@ -31,6 +31,32 @@ def get_target(key):
 
     return flask.render_template('target.html', target=key, data=data)
 
+@app.route('/email/<email>')
+def get_targets_with_email(email):
+    '''
+    Get list of targets that share the specified email address.
+    '''
+    targets = alias.db.get_correlated_targets('email', email)
+
+    return flask.render_template('same_email.html', targets=targets)
+
+@app.route('/name/<name>')
+def get_targets_with_name(name):
+    '''
+    Get list of targets that share the specified name.
+    '''
+    targets = alias.db.get_correlated_targets('name', name)
+
+    return flask.render_template('same_name.html', targets=targets)
+
+@app.route('/nym/<nym>')
+def get_targets_with_nym(nym):
+    '''
+    Get list of targets that share the specified pseudonym.
+    '''
+    targets = alias.db.get_correlated_targets('nym', nym)
+
+    return flask.render_template('same_nym.html', targets=targets)
 
 @app.route('/load', methods=['GET', 'POST'])
 def load():

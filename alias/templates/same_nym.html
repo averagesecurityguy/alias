@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block data %}
+
+{% if not targets %}
+	<p>No targets associated with this pseudonym.</p>
+{% else %}
+	<p>Other users associated with this pseudonym.</p>
+	<ul>
+	{% for target in targets %}
+		<li><a href="/target/{{ target }}">{{ target }}</a></li>
+	{% endfor %}
+	</ul>
+{% endif %}
+
+{% endblock %}

@@ -131,38 +131,59 @@ def get_target_data(target):
     return data
 
 
+def get_correlated_targets(target_type, key):
+    if target_type == 'email':
+        ids = email_db.lrange(key, 0, -1)
+    elif target_type == 'nym':
+        ids = nym_db.lrange(key, 0, -1)
+    elif target_type == 'name':
+        ids = name_db.lrange(key, 0, -1)
+    else:
+        return None
+    
+    return [user_db.hget(i, 'key') for i in ids]
+
+
 def add_target_email(target, address):
+    address = address.strip()
     tid = user_db.get(target)
     email_db.lpush(tid, address.lower())
     email_db.lpush(address.lower(), tid)
 
 
 def add_target_nym(target, nym):
+    nym = nym.strip()
     tid = user_db.get(target)
     nym_db.lpush(tid, nym)
     nym_db.lpush(nym, tid)
 
 
 def add_target_url(target, url):
+    url = url.strip()
     tid = user_db.get(target)
     url_db.lpush(tid, url)
 
 
 def add_target_location(target, location):
+    location = location.strip()
     tid = user_db.get(target)
     loc_db.lpush(tid, location)
 
 
 def add_target_name(target, name):
+    name = name.strip()
     tid = user_db.get(target)
     name_db.lpush(tid, name)
     name_db.lpush(name, tid)
 
+
 def add_target_description(target, desc):
+    desc = desc.strip()
     tid = user_db.get(target)
     about_db.lpush(tid, desc)
 
 
 def add_target_image(target, url):
+    url = url.strip()
     tid = user_db.get(target)
     image_db.lpush(tid, url)
