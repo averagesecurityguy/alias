@@ -134,11 +134,13 @@ def get_target_data(target):
 def add_target_email(target, address):
     tid = user_db.get(target)
     email_db.lpush(tid, address.lower())
+    email_db.lpush(address.lower(), tid)
 
 
 def add_target_nym(target, nym):
     tid = user_db.get(target)
     nym_db.lpush(tid, nym)
+    nym_db.lpush(nym, tid)
 
 
 def add_target_url(target, url):
@@ -154,7 +156,7 @@ def add_target_location(target, location):
 def add_target_name(target, name):
     tid = user_db.get(target)
     name_db.lpush(tid, name)
-
+    name_db.lpush(name, tid)
 
 def add_target_description(target, desc):
     tid = user_db.get(target)
