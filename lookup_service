@@ -11,4 +11,5 @@ import alias.lookup
 while True:
 	alias.lookup.gravatar.lookup()
 	alias.lookup.twitter.lookup()
+	alias.lookup.github.lookup()
 	time.sleep(60)

@@ -3,6 +3,7 @@
   "tw_consumer_secret": "",
   "tw_token": "",
   "tw_token_secret": "",
+  "github_token": "",
   "user_db": 0,
   "email_db": 1,
   "nym_db": 2,

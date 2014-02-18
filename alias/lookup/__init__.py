@@ -2,3 +2,4 @@
 
 import gravatar as gravatar
 import twitter as twitter
+import github as github

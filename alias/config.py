@@ -12,6 +12,7 @@ class AliasConfig():
         self.tw_consumer_secret = config.get('tw_consumer_secret', '')
         self.tw_token = config.get('tw_token', '')
         self.tw_token_secret = config.get('tw_token_secret', '')
+        self.github_token = config.get('github_token', '')
         self.user_db = config.get('user_db')
         self.email_db = config.get('email_db')
         self.nym_db = config.get('nym_db')
