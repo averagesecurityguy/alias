@@ -146,7 +146,7 @@ def get_sources_with_data():
     '''
     Get all sources that have data associated with them.
     '''
-    return [s.split(':')[1] for s in admin_db.keys('source:*')]
+    return sorted([s.split(':')[1] for s in admin_db.keys('source:*')])
 
 
 def get_target_data(target):
