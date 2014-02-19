@@ -60,6 +60,32 @@ def __get_emails(emails, ims):
     return email_list
 
 
+def __get_accounts(accounts):
+    '''
+    Pull any additional usernames from the accounts list.
+    '''
+    acct_list = []
+
+    if accounts is not None:
+        for a in accounts:
+            acct_list.append('{0} ({1})'.format(a['username'], a['shortname']))
+
+    return acct_list
+
+
+def __get_urls_from_accounts(accounts):
+    '''
+    Pull any additional URLs from the accounts list.
+    '''
+    url_list = []
+
+    if accounts is not None:
+        for a in accounts:
+            url_list.append(a.get('url', '').replace('\/', '/'))
+
+    return url_list
+
+
 def __get_nyms(ims):
     '''
     Pull any additional usernames from the IMs list.
@@ -135,8 +161,16 @@ def __process_results(result):
         nyms = __get_nyms(data.get('ims'))
         for nym in sorted(set(nyms)):
             alias.db.add_target_nym(username, nym)
+
+        accts = __get_accounts(data.get('accounts'))
+        for acct in sorted(set(accts)):
+            alias.db.add_target_nym(username, acct)
         
         urls = __get_urls(data)
+        for url in sorted(set(urls)):
+            alias.db.add_target_url(username, url)
+
+        urls = __get_urls_from_accounts(data.get('accounts'))
         for url in sorted(set(urls)):
             alias.db.add_target_url(username, url)
 
@@ -224,6 +258,11 @@ def lookup():
     print '[*] Loading screen names into queue.'
     for target in alias.db.get_unchecked_targets('gravatar', 'all'):
         count += 1
+
+        # Skip targets with a . in them.
+        if target.find('.') != -1:
+            continue
+
         user_queue.put({'user': target, 'gvuser': target})
 
     print '[*] Loaded {0} targets into the queue.'.format(count)
