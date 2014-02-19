@@ -13,7 +13,7 @@ import alias.db
 def __get_redirect(url):
     if url.startswith('https://t.co') or url.startswith('http://t.co'):
         resp = requests.get(url, allow_redirects=False)
-        return resp.headers['location']
+        return resp.headers.get('location', url)
 
     return url
 
