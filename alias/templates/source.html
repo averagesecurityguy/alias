@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 {% block data %}
 
-<h2>{{ source }}</h2>
+<h2>Targets found on {{ source }}</h2>
 
 {% if not targets %}
-	<p>No targets associated with this source.</p>
+	<p>No targets were found on {{ source }}.</p>
 {% else %}
-	<p>Targets associated with this source.</p>
 	<ul>
 	{% for target in targets %}
 		<li><a href="/target/{{ target }}">{{ target }}</a></li>

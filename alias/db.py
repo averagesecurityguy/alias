@@ -96,7 +96,7 @@ def add_new_target(target, key_type):
     '''
     target = target.strip()
     tid = user_db.get(target)
- 
+
     if tid is None:
         key_id = admin_db.get('key_id')
         admin_db.incr('key_id')
@@ -130,7 +130,7 @@ def add_target_to_source_list(target, source):
     '''
     if source in cfg.valid_sources:
         tid = user_db.get(target)
-        admin_db.lpush(source, tid)
+        admin_db.lpush('source:' + source, tid)
 
 
 def get_targets_from_source(source):
@@ -138,8 +138,15 @@ def get_targets_from_source(source):
     Return all targets with data from the specified source.
     '''
     if source in cfg.valid_sources:
-        tids = admin_db.lrange(source, 0, -1)
-        return [user_db.hget(tid, 'key') for tid in tids]
+        tids = admin_db.lrange('source:' + source, 0, -1)
+        return sorted([user_db.hget(tid, 'key') for tid in tids])
+
+
+def get_sources_with_data():
+    '''
+    Get all sources that have data associated with them.
+    '''
+    return [s.split(':')[1] for s in admin_db.keys('source:*')]
 
 
 def get_target_data(target):

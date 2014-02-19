@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block data %}
+
+<h2>Sources</h2>
+
+{% if not sources %}
+	<p>No sources have data associated with them.</p>
+{% else %}
+	<ul>
+	{% for source in sources %}
+		<li><a href="/source/{{ source }}">{{ source }}</a></li>
+	{% endfor %}
+	</ul>
+{% endif %}
+
+{% endblock %}
