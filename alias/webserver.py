@@ -76,8 +76,6 @@ def load():
 
     if flask.request.method == 'POST':
         count = alias.db.load_new_targets(flask.request.form['targets'])
-
-        if count > 0:
-            message = 'Loaded {0} account(s)'.format(count)
+        message = 'Loaded {0} account(s)'.format(count)
 
     return flask.render_template('load.html', message=message)

@@ -31,11 +31,11 @@ def load_new_targets(targets):
             continue
 
         if email_re.search(target) is None:
-            add_new_target(target, 'user')
+            if add_new_target(target, 'user'):
+                count += 1
         else:
-            add_new_target(target, 'email')            
-        
-        count += 1
+            if add_new_target(target, 'email'):
+                count += 1            
 
     return count
 
@@ -94,17 +94,22 @@ def add_new_target(target, key_type):
     '''
     Adds a new target to the database.
     '''
-    key_id = admin_db.get('key_id')
-    admin_db.incr('key_id')
+    tid = user_db.get(target)
+    if tid is None:
+        key_id = admin_db.get('key_id')
+        admin_db.incr('key_id')
 
-    data = {'key': target, 'type': key_type}
-    for source in cfg.valid_sources:
-        data[source] = '0'
+        data = {'key': target, 'type': key_type}
+        for source in cfg.valid_sources:
+            data[source] = '0'
 
-    tid = 'id:' + key_id
-    user_db.hmset(tid, data)
-    user_db.set(target, tid)
+        tid = 'id:' + key_id
+        user_db.hmset(tid, data)
+        user_db.set(target, tid)
 
+        return True
+
+    return False
 
 def mark_source_complete(target, source):
     '''
