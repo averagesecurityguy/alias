@@ -94,7 +94,9 @@ def add_new_target(target, key_type):
     '''
     Adds a new target to the database.
     '''
+    target = target.strip()
     tid = user_db.get(target)
+ 
     if tid is None:
         key_id = admin_db.get('key_id')
         admin_db.incr('key_id')
