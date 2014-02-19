@@ -59,6 +59,16 @@ def get_targets_with_nym(nym):
     return flask.render_template('same_nym.html', targets=targets)
 
 
+@app.route('/sources')
+def get_sources():
+    '''
+    Get a list of all sources with data associated with them.
+    '''
+    sources = alias.db.get_sources_with_data()
+
+    return flask.render_template('sources.html', sources=sources)
+
+
 @app.route('/source/<source>')
 def get_targets_from_source(source):
     '''
