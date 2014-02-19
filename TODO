@@ -4,3 +4,5 @@ To Do List
 * Add lookup for About.me
 * Add lookup for IM services, if possible.
 * Gravatar has phone numbers and additional accounts. Add these to dataset.
+* Ensure Gravatar lookups work properly with email addresses as well as usernames.
+* Search linkedin for usernames on this format. http://www.linkedin.com/in/jsmith
