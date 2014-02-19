@@ -22,8 +22,11 @@ def __get_urls(data):
         if key.endswith('_url'):
             url = data[key]
             idx = url.find('{')
-            url = url[:idx]
-            url_list.append(url)
+            
+            if idx == -1:
+                url_list.append(url)
+            else:
+                url_list.append(url[:idx + 1])
 
     return url_list
 
