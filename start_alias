@@ -1,16 +1,16 @@
 #!/bin/sh
 
 echo 'Starting Redis server.'
-echo '/usr/local/bin/redis-server conf/redis.conf &'
-/usr/local/bin/redis-server conf/redis.conf &
+echo '/usr/local/bin/redis-server conf/redis.conf > /dev/null 2>&1 &'
+/usr/local/bin/redis-server conf/redis.conf  > /dev/null 2>&1 &
 echo $! > conf/redis.pid
 
 echo 'Starting Alias web server.'
-echo '/usr/bin/env python alias_server &'
-/usr/bin/env python alias_server &
+echo '/usr/bin/env python alias_server  > /dev/null 2>&1 &'
+/usr/bin/env python alias_server  > /dev/null 2>&1 &
 echo $! > conf/alias.pid
 
 echo 'Starting lookup service.'
-echo '/usr/bin/env python lookup_service &'
-/usr/bin/env python lookup_service &
+echo '/usr/bin/env python lookup_service  > /dev/null 2>&1 &'
+/usr/bin/env python lookup_service  > /dev/null 2>&1 &
 echo $! > conf/lookup.pid
