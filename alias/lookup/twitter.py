@@ -70,6 +70,7 @@ def __get_twitter_connection(cfg):
 # Main Program
 #-----------------------------------------------------------------------------
 def lookup():
+    print '[*] Starting Twitter lookup.'
     cfg = alias.config.AliasConfig()
 
     tw = __get_twitter_connection(cfg)

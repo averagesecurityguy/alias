@@ -63,8 +63,8 @@ def __process_results(result):
             alias.db.add_target_description(username, bio)
 
         # If we have valid data add this target to the gravatar source list
-        alias.db.add_target_to_source_list(username, 'gravatar')
-        
+        alias.db.add_target_to_source_list(username, 'github')
+
     alias.db.mark_source_complete(username, 'github')
 
 
@@ -124,6 +124,7 @@ def __writer(result_queue):
 cfg = alias.config.AliasConfig()
 
 def lookup():
+    print '[*] Starting Github lookup.'
     user_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
     procs = []
@@ -131,7 +132,7 @@ def lookup():
     # Load targets from the database.
     count = 0
     print '[*] Loading screen names into queue.'
-    for target in alias.db.get_unchecked_targets('github', 'all'):
+    for target in alias.db.get_unchecked_targets('github', 'user'):
         count += 1
         user_queue.put(target)
 

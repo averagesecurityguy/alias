@@ -214,6 +214,7 @@ def __writer(result_queue):
 # Main Program
 #-----------------------------------------------------------------------------
 def lookup():
+    print '[*] Starting Gravatar lookup.'
     user_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
     procs = []
