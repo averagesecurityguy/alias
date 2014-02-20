@@ -2,12 +2,15 @@
 
 import re
 import redis
+import logging
 
 import alias.config
 
+logger = logging.getLogger('DB')
 email_re = re.compile(r'.*@.*\..*')
 cfg = alias.config.AliasConfig()
 
+logger.info('Configuring databases.')
 user_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.user_db)
 email_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.email_db)
 nym_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.nym_db)
@@ -19,6 +22,7 @@ image_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.image_db)
 admin_db = redis.StrictRedis(host='localhost', port=6379, db=cfg.admin_db)
 
 def load_new_targets(targets):
+    logger.info('Loading new targets.')
     # Make sure the key_id is available before adding data.
     if admin_db.get('key_id') is None:
         admin_db.set('key_id', 1)
@@ -44,6 +48,8 @@ def get_all_targets():
     '''
     Return a list of all targets.
     '''
+    logger.debug('Get all targets.')
+
     targets = [user_db.hget(i, 'key') for i in user_db.keys('id:*')]
     return targets
 
@@ -55,6 +61,8 @@ def get_unchecked_targets(source, key_type):
     Some sources work well with usernames, others with emails, and others will
     work with either.
     '''
+    logger.debug('Getting unchecked targets for {0}.'.format(source))
+    
     targets = []
 
     if source not in cfg.valid_sources:
@@ -79,6 +87,8 @@ def get_targets_with_data():
     '''
     Return a list of all targets that have data associated with them.
     '''
+    logger.debug('Getting all targets with data.')
+
     # Create a set of all the ids in each database
     ids = set(email_db.keys('id:*'))
     ids = ids.union(nym_db.keys('id:*'), url_db.keys('id:*'))
@@ -95,6 +105,7 @@ def add_new_target(target, key_type):
     Adds a new target to the database.
     '''
     target = target.strip()
+    logger.debug('Adding new target {0}.'.format(target))
     tid = user_db.get(target)
 
     if tid is None:
@@ -118,6 +129,7 @@ def mark_source_complete(target, source):
     Change the value of the specified source from 0 to 1 to indicate that
     this source has been checked for this user.
     '''
+    logger.debug('Marking {0} complete for {1}.'.format(source, target))
     if source in cfg.valid_sources:
         tid = user_db.get(target)
         user_db.hset(tid, source, '1')
@@ -128,6 +140,7 @@ def add_target_to_source_list(target, source):
     Add target to the list of other targets with data from the specified
     source.
     '''
+    logger.debug('Adding {0} to source list {1}.'.format(target, source))
     if source in cfg.valid_sources:
         tid = user_db.get(target)
         admin_db.lpush('source:' + source, tid)
@@ -137,6 +150,7 @@ def get_targets_from_source(source):
     '''
     Return all targets with data from the specified source.
     '''
+    logger.debug('Getting all targets associated with {0}.'.format(source))
     if source in cfg.valid_sources:
         tids = admin_db.lrange('source:' + source, 0, -1)
         return sorted([user_db.hget(tid, 'key') for tid in tids])
@@ -146,10 +160,12 @@ def get_sources_with_data():
     '''
     Get all sources that have data associated with them.
     '''
+    logger.debug('Getting list of sources with target data.')
     return sorted([s.split(':')[1] for s in admin_db.keys('source:*')])
 
 
 def get_target_data(target):
+    logger.debug('Getting all data associated with {0}.'.format(target))
     tid = user_db.get(target)
     data = {}
 
@@ -164,13 +180,15 @@ def get_target_data(target):
     return data
 
 
-def get_correlated_targets(target_type, key):
-    if target_type == 'email':
-        ids = email_db.lrange(key, 0, -1)
-    elif target_type == 'nym':
-        ids = nym_db.lrange(key, 0, -1)
-    elif target_type == 'name':
-        ids = name_db.lrange(key, 0, -1)
+def get_correlated_targets(dataset, target):
+    logger.debug('Getting all targets using the {0} {1}.'.format(dataset,
+                                                                 target))
+    if dataset == 'email':
+        ids = email_db.lrange(target, 0, -1)
+    elif dataset == 'nym':
+        ids = nym_db.lrange(target, 0, -1)
+    elif dataset == 'name':
+        ids = name_db.lrange(target, 0, -1)
     else:
         return None
     
@@ -178,6 +196,7 @@ def get_correlated_targets(target_type, key):
 
 
 def add_target_email(target, address):
+    logger.debug('Adding new email {0} to {1}.'.format(address, target))
     address = address.strip()
     tid = user_db.get(target)
     email_db.lpush(tid, address.lower())
@@ -185,6 +204,7 @@ def add_target_email(target, address):
 
 
 def add_target_nym(target, nym):
+    logger.debug('Adding pseudonym {0} to {1}.'.format(nym, target))
     nym = nym.strip()
     tid = user_db.get(target)
     nym_db.lpush(tid, nym)
@@ -192,18 +212,21 @@ def add_target_nym(target, nym):
 
 
 def add_target_url(target, url):
+    logger.debug('Adding url {0} to {1}.'.format(url, target))
     url = url.strip()
     tid = user_db.get(target)
     url_db.lpush(tid, url)
 
 
 def add_target_location(target, location):
+    logger.debug('Adding location {0} to {1}.'.format(location, target))
     location = location.strip()
     tid = user_db.get(target)
     loc_db.lpush(tid, location)
 
 
 def add_target_name(target, name):
+    logger.debug('Adding name {0} to {1}.'.format(name, target))
     name = name.strip()
     tid = user_db.get(target)
     name_db.lpush(tid, name)
@@ -211,12 +234,14 @@ def add_target_name(target, name):
 
 
 def add_target_description(target, desc):
+    logger.debug('Adding desc {0} to {1}.'.format(desc[:40], target))
     desc = desc.strip()
     tid = user_db.get(target)
     about_db.lpush(tid, desc)
 
 
 def add_target_image(target, url):
+    logger.debug('Adding image URL {0} to {1}.'.format(url, target))
     url = url.strip()
     tid = user_db.get(target)
     image_db.lpush(tid, url)
