@@ -4,6 +4,7 @@
 import requests
 import multiprocessing
 import Queue
+import logging
 
 import alias.db
 
@@ -15,6 +16,7 @@ def __get_names(name):
     Get the formatted name if available, if not build the name from the given
     and family names.
     '''
+    logger.debug('Processing name.')
     name_list = []
 
     if (name == []) or (name is None):
@@ -34,6 +36,7 @@ def __get_locations(location):
     '''
     Get the location data.
     '''
+    logger.debug('Processing locations.')
     locations = []
 
     if location is not None:
@@ -46,6 +49,7 @@ def __get_emails(emails, ims):
     '''
     Pull any email addresses from the emails list and from the IMs list.
     '''
+    logger.debug('Processing email addresses.')
     email_list = []
 
     if emails is not None:
@@ -64,6 +68,7 @@ def __get_accounts(accounts):
     '''
     Pull any additional usernames from the accounts list.
     '''
+    logger.debug('Processing accounts.')
     acct_list = []
 
     if accounts is not None:
@@ -77,6 +82,7 @@ def __get_urls_from_accounts(accounts):
     '''
     Pull any additional URLs from the accounts list.
     '''
+    logger.debug('Processing URLs.')
     url_list = []
 
     if accounts is not None:
@@ -90,6 +96,7 @@ def __get_nyms(ims):
     '''
     Pull any additional usernames from the IMs list.
     '''
+    logger.debug('Processing IM list.')
     nym_list = []
 
     if ims is not None:
@@ -103,6 +110,7 @@ def __get_images(data):
     '''
     Pull any image links from the gravatar data.
     '''
+    logger.debug('Processing image list.')
     image_list = {}
 
     if data.get('thumbnailUrl') is not None:
@@ -123,6 +131,7 @@ def __get_urls(data):
     '''
     Pull any urls from the gravatar data.
     '''
+    logger.debug('Processing URLs.')
     url_list = {}
 
     if data.get('urls') is not None:
@@ -136,6 +145,7 @@ def __get_descriptions(description):
     '''
     Get the description data.
     '''
+    logger.debug('Processing description.')
     descriptions = []
 
     if description is not None:
@@ -149,6 +159,7 @@ def __process_results(result):
     Get each of the data items we are looking for from the result and write
     them to the databases.
     '''
+    logger.debug('Processing result.')
 
     username = result[0]
 
@@ -196,13 +207,13 @@ def __worker(user_queue, result_queue):
     '''
     Thread to lookup gravatar results.
     '''
-    print '[*] Starting new worker thread.'
+    logger.debug('Starting new worker thread.')
     while True:
         # If there are no creds to test, stop the thread
         try:
             user = user_queue.get(timeout=10)
         except Queue.Empty:
-            print '[-] User queue is empty, quitting.'
+            logger.debug('User queue is empty, quitting.')
             return
 
         url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
@@ -225,7 +236,7 @@ def __writer(result_queue):
     '''
     Thread to write Gravatar results to the database.
     '''
-    print '[*] Starting writer thread.'
+    logger.debug('Starting writer thread.')
     count = 0
     while True:
         count += 1
@@ -234,28 +245,30 @@ def __writer(result_queue):
         try:
             result = result_queue.get(timeout=30)
         except Queue.Empty:
-            print '[-] Result queue is empty, quitting'
+            logger.debug('Result queue is empty, quitting')
             return
 
         # Process the result pulled from the queue
         __process_results(result)
 
         if count % 1000 == 0:
-            print '[*] Processed {0}'.format(count)
+            logger.debug('Processed {0} targets'.format(count))
 
 
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
+logger = logging.getLogger('GRAVATAR')
+
 def lookup():
-    print '[*] Starting Gravatar lookup.'
+    logger.info('Starting Gravatar lookup.')
     user_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
     procs = []
 
     # Load targets from the database.
     count = 0
-    print '[*] Loading screen names into queue.'
+    logger.info('Loading screen names into queue.')
     for target in alias.db.get_unchecked_targets('gravatar', 'all'):
         count += 1
 
@@ -265,7 +278,7 @@ def lookup():
 
         user_queue.put({'user': target, 'gvuser': target})
 
-    print '[*] Loaded {0} targets into the queue.'.format(count)
+    logger.info('Loaded {0} targets into the queue.'.format(count))
 
     for i in range(4):
         p = multiprocessing.Process(target=__worker, args=(user_queue,
@@ -282,3 +295,5 @@ def lookup():
     # Wait for all worker processes to finish
     for p in procs:
         p.join()
+
+    logger.info('Finished Gravatar lookup.')

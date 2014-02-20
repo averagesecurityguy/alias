@@ -4,7 +4,7 @@
 import requests
 import multiprocessing
 import Queue
-import time
+import logging
 
 import alias.db
 import alias.config
@@ -16,13 +16,14 @@ def __get_urls(data):
     '''
     Pull any urls from the gravatar data.
     '''
+    logger.debug('Processing URLs.')
     url_list = []
 
     for key in data:
         if key.endswith('_url'):
             url = data[key]
             idx = url.find('{')
-            
+
             if idx == -1:
                 url_list.append(url)
             else:
@@ -36,6 +37,7 @@ def __process_results(result):
     Get each of the data items we are looking for from the result and write
     them to the databases.
     '''
+    logger.debug('Processing result.')
 
     username = result[0]
     data = result[1]
@@ -75,13 +77,13 @@ def __worker(user_queue, result_queue, key):
     '''
     Thread to lookup Github users.
     '''
-    print '[*] Starting new worker thread.'
+    logger.debug('Starting new worker thread.')
     while True:
         # If there are no creds to test, stop the thread
         try:
             user = user_queue.get(timeout=10)
         except Queue.Empty:
-            print '[-] User queue is empty, quitting.'
+            logger.debug('User queue is empty, quitting.')
             return
 
         # Lookup user
@@ -91,7 +93,7 @@ def __worker(user_queue, result_queue, key):
 
         # Ensure we haven't hit our rate limit.
         if resp.headers['X-RateLimit-Remaining'] == '0':
-            print '[-] Rate limit exceeded. Finished for now.'
+            logger.warning('Rate limit exceeded. Finished for now.')
             return
 
         # If we have not hit our rate limit then add the result to the queue.
@@ -102,7 +104,7 @@ def __writer(result_queue):
     '''
     Thread to write Github results to the database.
     '''
-    print '[*] Starting writer thread.'
+    logger.debug('Starting writer thread.')
     count = 0
     while True:
         count += 1
@@ -111,35 +113,37 @@ def __writer(result_queue):
         try:
             result = result_queue.get(timeout=30)
         except Queue.Empty:
-            print '[-] Result queue is empty, quitting'
+            logger.debug('Result queue is empty, quitting')
             return
 
         # Process the result pulled from the queue
         __process_results(result)
 
         if count % 1000 == 0:
-            print '[*] Processed {0}'.format(count)
+            logger.debug('Processed {0}'.format(count))
 
 
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-cfg = alias.config.AliasConfig()
+logger = logging.getLogger('GITHUB')
 
 def lookup():
-    print '[*] Starting Github lookup.'
+    logger.info('Starting Github lookup.')
+
+    cfg = alias.config.AliasConfig()
     user_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
     procs = []
 
     # Load targets from the database.
     count = 0
-    print '[*] Loading screen names into queue.'
+    logger.info('Loading screen names into queue.')
     for target in alias.db.get_unchecked_targets('github', 'user'):
         count += 1
         user_queue.put(target)
 
-    print '[*] Loaded {0} targets into the queue.'.format(count)
+    logger.info('Loaded {0} targets into the queue.'.format(count))
 
     # Create lookup threads.
     for i in range(4):
@@ -158,3 +162,5 @@ def lookup():
     # Wait for all worker processes to finish
     for p in procs:
         p.join()
+
+    logger.info('Finished Github lookup.')
