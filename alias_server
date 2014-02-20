@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import os
+
 import alias.webserver as server
+
+log_file = os.path.join('log', 'alias.log')
+
+logging.basicConfig(
+	level=logging.INFO,
+	filename=log_file)
+
+logging.info('Starting Alias server.')
 
 server.app.run()
