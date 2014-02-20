@@ -6,3 +6,8 @@ To Do List
 * Gravatar has phone numbers and additional accounts. Add these to dataset.
 * Ensure Gravatar lookups work properly with email addresses as well as usernames.
 * Search linkedin for usernames on this format. http://www.linkedin.com/in/jsmith
+* Make sure all dictionary lookups use get with a reasonable default.
+* How to ensure multiprocess apps clean up properly when there is an exception.
+* Gravatar: fix __get_images to use list and return a set.
+* Github: Only capture certain URLs.
+* Create install and usage docs.
