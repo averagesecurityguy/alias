@@ -2,3 +2,4 @@
 *.conf
 .DS_Store
 *.log
+*.rdb
