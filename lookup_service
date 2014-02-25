@@ -5,8 +5,24 @@
 # again.
 
 import time
+import logging
+import os
 
 import alias.lookup
+
+# Configure logging for the lookup service and all the modules.
+log_file = os.path.join('log', 'alias.log')
+logging.basicConfig(
+	level=logging.INFO,
+	filename=log_file
+)
+
+# Suppress verbose logging from the requests module.
+requests_log = logging.getLogger("requests.packages.urllib3")
+requests_log.setLevel(logging.WARNING)
+
+
+
 
 while True:
 	alias.lookup.gravatar.lookup()
