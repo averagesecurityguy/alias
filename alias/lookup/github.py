@@ -20,7 +20,16 @@ def __get_urls(data):
     url_list = []
 
     for key in data:
-        if key.endswith('_url'):
+        if key == 'url':
+            continue
+        if key == 'starred_url':
+            continue
+        if key == 'events_url':
+            continue
+        if key == 'received_events_url':
+            continue
+
+        if key.starts_with('_url'):
             url = data[key]
             idx = url.find('{')
 
@@ -28,6 +37,9 @@ def __get_urls(data):
                 url_list.append(url)
             else:
                 url_list.append(url[:idx + 1])
+
+    if data.get('blog') is not None:
+        url_list.append(data.get('blog', ''))
 
     return url_list
 
