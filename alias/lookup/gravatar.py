@@ -111,20 +111,20 @@ def __get_images(data):
     Pull any image links from the gravatar data.
     '''
     logger.debug('Processing image list.')
-    image_list = {}
+    image_list = []
 
     if data.get('thumbnailUrl') is not None:
-        image_list[data['thumbnailUrl']] = 1
+        image_list.append(data['thumbnailUrl'])
 
     if data.get('profileBackground') is not None:
         if data['profileBackground'].get('url') is not None:
-            image_list[data['profileBackground']['url']] = 1
+            image_list.append(data['profileBackground']['url'])
 
     if data.get('photos') is not None:
         for u in data.get('photos'):
-            image_list[u['value']] = 1
+            image_list.append(u['value'])
 
-    return image_list.keys()
+    return image_list
 
 
 def __get_urls(data):
@@ -132,13 +132,13 @@ def __get_urls(data):
     Pull any urls from the gravatar data.
     '''
     logger.debug('Processing URLs.')
-    url_list = {}
+    url_list = []
 
     if data.get('urls') is not None:
         for u in data.get('urls'):
-            url_list[u['value']] = 1
+            url_list.append(u['value'])
 
-    return url_list.keys()
+    return url_list
 
 
 def __get_descriptions(description):
