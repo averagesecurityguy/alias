@@ -105,7 +105,7 @@ def add_new_target(target, key_type):
     Adds a new target to the database.
     '''
     target = target.strip()
-    logger.debug('Adding new target {0}.'.format(target))
+    logger.debug(u'Adding new target {0}.'.format(target))
     tid = user_db.get(target)
 
     if tid is None:
@@ -129,7 +129,7 @@ def mark_source_complete(target, source):
     Change the value of the specified source from 0 to 1 to indicate that
     this source has been checked for this user.
     '''
-    logger.debug('Marking {0} complete for {1}.'.format(source, target))
+    logger.debug(u'Marking {0} complete for {1}.'.format(source, target))
     if source in cfg.valid_sources:
         tid = user_db.get(target)
         user_db.hset(tid, source, '1')
@@ -140,7 +140,7 @@ def add_target_to_source_list(target, source):
     Add target to the list of other targets with data from the specified
     source.
     '''
-    logger.debug('Adding {0} to source list {1}.'.format(target, source))
+    logger.debug(u'Adding {0} to source list {1}.'.format(target, source))
     if source in cfg.valid_sources:
         tid = user_db.get(target)
         admin_db.lpush('source:' + source, tid)
@@ -150,7 +150,7 @@ def get_targets_from_source(source):
     '''
     Return all targets with data from the specified source.
     '''
-    logger.debug('Getting all targets associated with {0}.'.format(source))
+    logger.debug(u'Getting all targets associated with {0}.'.format(source))
     if source in cfg.valid_sources:
         tids = admin_db.lrange('source:' + source, 0, -1)
         return sorted([user_db.hget(tid, 'key') for tid in tids])
@@ -165,7 +165,7 @@ def get_sources_with_data():
 
 
 def get_target_data(target):
-    logger.debug('Getting all data associated with {0}.'.format(target))
+    logger.debug(u'Getting all data associated with {0}.'.format(target))
     tid = user_db.get(target)
     data = {}
 
@@ -181,7 +181,7 @@ def get_target_data(target):
 
 
 def get_correlated_targets(dataset, target):
-    logger.debug('Getting all targets using the {0} {1}.'.format(dataset,
+    logger.debug(u'Getting all targets using the {0} {1}.'.format(dataset,
                                                                  target))
     if dataset == 'email':
         ids = email_db.lrange(target, 0, -1)
@@ -196,7 +196,7 @@ def get_correlated_targets(dataset, target):
 
 
 def add_target_email(target, address):
-    logger.debug('Adding new email {0} to {1}.'.format(address, target))
+    logger.debug(u'Adding new email {0} to {1}.'.format(address, target))
     address = address.strip()
     tid = user_db.get(target)
     email_db.lpush(tid, address.lower())
@@ -204,7 +204,7 @@ def add_target_email(target, address):
 
 
 def add_target_nym(target, nym):
-    logger.debug('Adding pseudonym {0} to {1}.'.format(nym, target))
+    logger.debug(u'Adding pseudonym {0} to {1}.'.format(nym, target))
     nym = nym.strip()
     tid = user_db.get(target)
     nym_db.lpush(tid, nym)
@@ -212,21 +212,21 @@ def add_target_nym(target, nym):
 
 
 def add_target_url(target, url):
-    logger.debug('Adding url {0} to {1}.'.format(url, target))
+    logger.debug(u'Adding url {0} to {1}.'.format(url, target))
     url = url.strip()
     tid = user_db.get(target)
     url_db.lpush(tid, url)
 
 
 def add_target_location(target, location):
-    logger.debug('Adding location {0} to {1}.'.format(location, target))
+    logger.debug(u'Adding location {0} to {1}.'.format(location, target))
     location = location.strip()
     tid = user_db.get(target)
     loc_db.lpush(tid, location)
 
 
 def add_target_name(target, name):
-    logger.debug('Adding name {0} to {1}.'.format(name, target))
+    logger.debug(u'Adding name {0} to {1}.'.format(name, target))
     name = name.strip()
     tid = user_db.get(target)
     name_db.lpush(tid, name)
@@ -234,14 +234,14 @@ def add_target_name(target, name):
 
 
 def add_target_description(target, desc):
-    logger.debug('Adding desc {0} to {1}.'.format(desc[:40], target))
+    logger.debug(u'Adding desc {0} to {1}.'.format(desc[:40], target))
     desc = desc.strip()
     tid = user_db.get(target)
     about_db.lpush(tid, desc)
 
 
 def add_target_image(target, url):
-    logger.debug('Adding image URL {0} to {1}.'.format(url, target))
+    logger.debug(u'Adding image URL {0} to {1}.'.format(url, target))
     url = url.strip()
     tid = user_db.get(target)
     image_db.lpush(tid, url)
