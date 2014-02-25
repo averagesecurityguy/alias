@@ -5,6 +5,7 @@ import requests
 import multiprocessing
 import Queue
 import logging
+import signal
 
 import alias.db
 import alias.config
@@ -90,33 +91,41 @@ def __worker(user_queue, result_queue, key):
     Thread to lookup Github users.
     '''
     logger.debug('Starting new worker thread.')
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     while True:
         # If there are no creds to test, stop the thread
         try:
             user = user_queue.get(timeout=10)
+
+            # Lookup user
+            url = 'https://api.github.com/users/{0}'.format(user)
+            auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')        
+            resp = requests.get(url, auth=auth)
+
+            # Ensure we haven't hit our rate limit.
+            if resp.headers['X-RateLimit-Remaining'] == '0':
+                logger.warning('Rate limit exceeded. Finished for now.')
+                return
+
+            # If we have not hit our rate limit then add the result to the queue.
+            result_queue.put((user, resp.json()))
+
         except Queue.Empty:
             logger.debug('User queue is empty, quitting.')
             return
 
-        # Lookup user
-        url = 'https://api.github.com/users/{0}'.format(user)
-        auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')        
-        resp = requests.get(url, auth=auth)
-
-        # Ensure we haven't hit our rate limit.
-        if resp.headers['X-RateLimit-Remaining'] == '0':
-            logger.warning('Rate limit exceeded. Finished for now.')
+        except Exception as e:
+            logger.debug(str(e))
             return
-
-        # If we have not hit our rate limit then add the result to the queue.
-        result_queue.put((user, resp.json()))
-
 
 def __writer(result_queue):
     '''
     Thread to write Github results to the database.
     '''
     logger.debug('Starting writer thread.')
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     count = 0
     while True:
         count += 1
@@ -124,16 +133,20 @@ def __writer(result_queue):
         # If there are no results to write, stop the thread
         try:
             result = result_queue.get(timeout=30)
+
+            # Process the result pulled from the queue
+            __process_results(result)
+
+            if count % 1000 == 0:
+                logger.debug('Processed {0}'.format(count))
+
         except Queue.Empty:
             logger.debug('Result queue is empty, quitting')
             return
 
-        # Process the result pulled from the queue
-        __process_results(result)
-
-        if count % 1000 == 0:
-            logger.debug('Processed {0}'.format(count))
-
+        except Exception as e:
+            logger.debug(str(e))
+            return
 
 #-----------------------------------------------------------------------------
 # Main Program
@@ -172,7 +185,12 @@ def lookup():
     w.start()
 
     # Wait for all worker processes to finish
-    for p in procs:
-        p.join()
+    try:
+        for p in procs:
+            p.join()
+    except KeyboardInterrupt:
+        for p in procs:
+            p.terminate()
+            p.join()
 
     logger.info('Finished Github lookup.')

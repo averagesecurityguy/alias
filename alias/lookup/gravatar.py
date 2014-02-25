@@ -5,6 +5,7 @@ import requests
 import multiprocessing
 import Queue
 import logging
+import signal
 
 import alias.db
 
@@ -208,28 +209,35 @@ def __worker(user_queue, result_queue):
     Thread to lookup gravatar results.
     '''
     logger.debug('Starting new worker thread.')
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     while True:
         # If there are no creds to test, stop the thread
         try:
             user = user_queue.get(timeout=10)
+
+            url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
+            resp = requests.get(url, allow_redirects=False)
+            if resp.status_code == 404:
+                result_queue.put((user['user'], None))
+            elif resp.status_code == 302:
+                location = resp.headers['location']
+                if location == '/profiles/no-such-user':
+                    result_queue.put((user['user'], None))
+
+                if not location.startswith('http://en.gravatar.com'):
+                    user['gvuser'] = location.lstrip('/').lower()
+                    user_queue.put(user)
+            else:
+                result_queue.put((user['user'], resp.json()))
+
         except Queue.Empty:
             logger.debug('User queue is empty, quitting.')
             return
 
-        url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
-        resp = requests.get(url, allow_redirects=False)
-        if resp.status_code == 404:
-            result_queue.put((user['user'], None))
-        elif resp.status_code == 302:
-            location = resp.headers['location']
-            if location == '/profiles/no-such-user':
-                result_queue.put((user['user'], None))
-
-            if not location.startswith('http://en.gravatar.com'):
-                user['gvuser'] = location.lstrip('/').lower()
-                user_queue.put(user)
-        else:
-            result_queue.put((user['user'], resp.json()))
+        except Exception as e:
+            logger.debug(str(e))
+            return
 
 
 def __writer(result_queue):
@@ -237,6 +245,8 @@ def __writer(result_queue):
     Thread to write Gravatar results to the database.
     '''
     logger.debug('Starting writer thread.')
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
     count = 0
     while True:
         count += 1
@@ -244,16 +254,20 @@ def __writer(result_queue):
         # If there are no results to write, stop the thread
         try:
             result = result_queue.get(timeout=30)
+
+            # Process the result pulled from the queue
+            __process_results(result)
+
+            if count % 1000 == 0:
+                logger.debug('Processed {0} targets'.format(count))
+
         except Queue.Empty:
             logger.debug('Result queue is empty, quitting')
             return
 
-        # Process the result pulled from the queue
-        __process_results(result)
-
-        if count % 1000 == 0:
-            logger.debug('Processed {0} targets'.format(count))
-
+        except Exception as e:
+            logger.debug(str(e))
+            return
 
 #-----------------------------------------------------------------------------
 # Main Program
@@ -293,7 +307,12 @@ def lookup():
     w.start()
 
     # Wait for all worker processes to finish
-    for p in procs:
-        p.join()
+    try:
+        for p in procs:
+            p.join()
+    except KeyboardInterrupt:
+        for p in procs:
+            p.terminate()
+            p.join()
 
     logger.info('Finished Gravatar lookup.')
