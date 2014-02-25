@@ -56,6 +56,10 @@ def __process_results(results):
         if (purl is not None) and (purl != ''):
             alias.db.add_target_image(username, purl)
 
+        pburl = user.get('profile_background_image_url')
+        if (pburl is not None) and (pburl != ''):
+            alias.db.add_target_image(username, pburl)
+
         # If we have valid data add this target to the twitter source list
         alias.db.add_target_to_source_list(username, 'twitter')
 
