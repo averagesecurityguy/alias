@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block data %}
-<p>A/S/L takes a list of usernames or email addresses and searches for data about the people associated with those usernames or email addresses. Currently, A/S/L searches Twitter and Gravatar for additional data. In the future new search modules will be added. If you would like to help add new modules fork the project on <a href="https://github.com/averagesecurityguy/asl">Github</a> and contribute.</p>
+<p>Alias takes a list of usernames and searches for data about the people associated with those usernames. Currently, Alias searches Twitter, Gravatar, and Github for additional data. In the future new search modules will be added. If you would like to help add new modules fork the project on <a href="https://github.com/averagesecurityguy/alias">Github</a> and contribute.</p>
 
-<p>To use A/S/L, go to the Add Users tab and upload a comma delimited list of usernames or email addresses. Next, go to the Perform Lookups tab and start the various lookups. Once the lookups are complete, Use the User Directory and Email Directory tabs to view the data.</p>
+<p>To use Alias, go to the Add Targets tab and upload a comma delimited list of usernames. Next, go to the View Targets tab and view the information found on the uploaded usernames. The lookup services run in the background so data will be continually added to this page until all the users have been looked up on each service. You will need to refresh the page regularly to see any updates. You can also look at the View Services tab to get a list of services where the uploaded usernames were found.</p>
 
 {% endblock %}
