@@ -4,21 +4,23 @@ The alias tool takes a list of usernames and attempts to gather information abou
 
 Prerequisites
 -------------
-pip install flask
-pip install pyredis
-install redis
+flask - http://flask.pocoo.org/
+redis-py - https://github.com/andymccurdy/redis-py
+redis - http://redis.io/
+
+Installation
+------------
+git clone https://github.com/averagesecurityguy/alias
 
 Server Management
 -----------------
-start_alias.sh - Starts the Redis server and the alias web server.
-stop_alias.sh - Stops the Redis server and the alias web server.
+start_alias - Starts the Redis server, the alias web server, and the lookup services.
+stop_alias - Stops the Redis server, the alias web server, and the lookup services.
 
-Building the Database
----------------------
-To build the database you must first load the usernames using `load_usernames username_file`. After the usernames are loaded, lookup the users using the `lookup_twitter_users` and `lookup_gravatar_users` scripts. When processing a large set of usernames, the lookup_* scripts may fail for various reasons. If the scripts fail for any reason, restart them and they will resume where they left off. The scripts should be run until there are no more usernames to be processed.
+Usage
+-----
+Run the start_alias script. If the script runs successfully go to http://127.0.0.1:5000. Next, go to the Add Users tab and upload a comma delimited list of usernames. Next, go to the View Targets tab and view the information found on the uploaded usernames. The lookup services run in the background so data will be continually added to this page until all the users have been looked up on each service. You will need to refresh the page regularly to see any updates. You can also look at the View Services tab to get a list of services where the uploaded usernames were found.
 
-The database only has to be built once. After that you can search through the data as often as you want. The Redis database is saved in the data folder as alias.rdb. This file can be renamed to save the dataset for later use.
-
-View the Data
--------------
-Once the database is built, you can go to [http://127.0.0.1:5000/](http://127.0.0.1:5000) to view the data.
+Data Sources
+------------
+Alias will search for users on Twitter, Gravatar, and Github.
