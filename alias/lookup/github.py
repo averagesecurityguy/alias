@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import requests
-import multiprocessing
-import Queue
 import logging
-import signal
+import time
 
 import alias.db
 import alias.config
@@ -20,24 +18,11 @@ def __get_urls(data):
     logger.debug('Processing URLs.')
     url_list = []
 
-    for key in data:
-        if key == 'url':
-            continue
-        if key == 'starred_url':
-            continue
-        if key == 'events_url':
-            continue
-        if key == 'received_events_url':
-            continue
+    if data.get('html_url') is not None:
+        url_list.append(data.get('html_url', ''))
 
-        if key.starts_with('_url'):
-            url = data[key]
-            idx = url.find('{')
-
-            if idx == -1:
-                url_list.append(url)
-            else:
-                url_list.append(url[:idx + 1])
+    if data.get('avatar_url') is not None:
+        url_list.append(data.get('avatar_url', ''))
 
     if data.get('blog') is not None:
         url_list.append(data.get('blog', ''))
@@ -86,111 +71,87 @@ def __process_results(result):
     alias.db.mark_source_complete(username, 'github')
 
 
-def __worker(user_queue, result_queue, key):
+def __request(url, key):
     '''
-    Thread to lookup Github users.
+    Make a request to the Github api.
     '''
-    logger.debug('Starting new worker thread.')
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')        
+        resp = requests.get(url, auth=auth)
 
-    while True:
-        # If there are no creds to test, stop the thread
-        try:
-            user = user_queue.get(timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            return None
 
-            # Lookup user
-            url = 'https://api.github.com/users/{0}'.format(user)
-            auth = requests.auth.HTTPBasicAuth(key, 'x-oauth-basic')        
-            resp = requests.get(url, auth=auth)
+    except Exception as e:
+        logger.error(e)
+        return None
 
-            # Ensure we haven't hit our rate limit.
-            if resp.headers['X-RateLimit-Remaining'] == '0':
-                logger.warning('Rate limit exceeded. Finished for now.')
-                return
 
-            # If we have not hit our rate limit then add the result to the queue.
-            result_queue.put((user, resp.json()))
-
-        except Queue.Empty:
-            logger.debug('User queue is empty, quitting.')
-            return
-
-        except Exception as e:
-            logger.debug(str(e))
-            return
-
-def __writer(result_queue):
+def __lookup_user(user, key):
     '''
-    Thread to write Github results to the database.
+    Lookup a Github user.
     '''
-    logger.debug('Starting writer thread.')
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    count = 0
-    while True:
-        count += 1
+    try:
+        # Lookup user
+        resp = __request('https://api.github.com/users/' + user, key)
 
-        # If there are no results to write, stop the thread
-        try:
-            result = result_queue.get(timeout=30)
+        if resp.status_code == 200:
+            __process_results((user, resp))
 
-            # Process the result pulled from the queue
-            __process_results(result)
+        return None
 
-            if count % 1000 == 0:
-                logger.debug('Processed {0}'.format(count))
+    except Exception as e:
+        logger.debug(str(e))
+        return None
 
-        except Queue.Empty:
-            logger.debug('Result queue is empty, quitting')
-            return
 
-        except Exception as e:
-            logger.debug(str(e))
-            return
+def __check_rate_limit():
+    '''
+    Check to see if we have hit our rate limit.
+    '''
+    resp = __request('https://api.github.com/rate_limit')
+
+    if resp is not None:
+        rate = resp.get('rate', {})
+        if rate.get('remaining', 0) == 0:
+            return True
+        else:
+            return False
+
+    else:
+        return False
+
 
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-logger = logging.getLogger('GITHUB')
+logger = logging.getLogger('Github')
 
 def lookup():
     logger.info('Starting Github lookup.')
 
     cfg = alias.config.AliasConfig()
-    user_queue = multiprocessing.Queue()
-    result_queue = multiprocessing.Queue()
-    procs = []
 
     # Load targets from the database.
     count = 0
-    logger.info('Loading screen names into queue.')
+    logger.info('Getting unprocessed Github usernames from database.')
+
+    limited = True
     for target in alias.db.get_unchecked_targets('github', 'user'):
         count += 1
-        user_queue.put(target)
+        
+        if limited is False:
+            __lookup_user(target, cfg.github_token)
 
-    logger.info('Loaded {0} targets into the queue.'.format(count))
+        if (not limited) and (count % 100 == 0):
+            limited = __check_rate_limit()
 
-    # Create lookup threads.
-    for i in range(4):
-        p = multiprocessing.Process(target=__worker, args=(user_queue,
-                                                           result_queue,
-                                                           cfg.github_token))
-        procs.append(p)
-        p.start()
+        if count % 1000 == 0:
+            logger.info('Processed {0} Github users.'.format(count))
 
-
-    # Create a thread to write the results to the file.
-    w = multiprocessing.Process(target=__writer, args=(result_queue,))
-    procs.append(w)
-    w.start()
-
-    # Wait for all worker processes to finish
-    try:
-        for p in procs:
-            p.join()
-    except KeyboardInterrupt:
-        for p in procs:
-            p.terminate()
-            p.join()
-
+    logger.info('Processed {0} Github users.'.format(count))
     logger.info('Finished Github lookup.')
+    return None

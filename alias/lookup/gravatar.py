@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
-import multiprocessing
-import Queue
 import logging
-import signal
 
 import alias.db
 
@@ -204,115 +201,68 @@ def __process_results(result):
     alias.db.mark_source_complete(username, 'gravatar')
 
 
-def __worker(user_queue, result_queue):
+def __lookup_user(user):
     '''
-    Thread to lookup gravatar results.
+    Lookup the user. Sometimes Gravatar will have an alternate username as
+    the primary username on the account. We track that username using the
+    user['gvuser'] value.
     '''
-    logger.debug('Starting new worker thread.')
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    while True:
-        # If there are no creds to test, stop the thread
-        try:
-            user = user_queue.get(timeout=10)
+    try:
+        url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
+        resp = requests.get(url, allow_redirects=False)
+        if resp.status_code == 404:
+            __process_results((user['user'], None))
+            return None
 
-            url = 'http://en.gravatar.com/{0}.json'.format(user['gvuser'])
-            resp = requests.get(url, allow_redirects=False)
-            if resp.status_code == 404:
-                result_queue.put((user['user'], None))
-            elif resp.status_code == 302:
-                location = resp.headers['location']
-                if location == '/profiles/no-such-user':
-                    result_queue.put((user['user'], None))
+        elif resp.status_code == 302:
+            location = resp.headers['location']
+            if location == '/profiles/no-such-user':
+                __process_results((user['user'], None))
+                return None
 
-                if not location.startswith('http://en.gravatar.com'):
-                    user['gvuser'] = location.lstrip('/').lower()
-                    user_queue.put(user)
-            else:
-                result_queue.put((user['user'], resp.json()))
+            if not location.startswith('http://en.gravatar.com'):
+                user['gvuser'] = location.lstrip('/').lower()
+                return user 
+        
+        else:
+            __process_results((user['user'], resp.json()))
+            return None
 
-        except Queue.Empty:
-            logger.debug('User queue is empty, quitting.')
-            return
+    except Exception as e:
+        logger.debug(str(e))
+        return None
 
-        except Exception as e:
-            logger.debug(str(e))
-            return
-
-
-def __writer(result_queue):
-    '''
-    Thread to write Gravatar results to the database.
-    '''
-    logger.debug('Starting writer thread.')
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    count = 0
-    while True:
-        count += 1
-
-        # If there are no results to write, stop the thread
-        try:
-            result = result_queue.get(timeout=30)
-
-            # Process the result pulled from the queue
-            __process_results(result)
-
-            if count % 1000 == 0:
-                logger.debug('Processed {0} targets'.format(count))
-
-        except Queue.Empty:
-            logger.debug('Result queue is empty, quitting')
-            return
-
-        except Exception as e:
-            logger.debug(str(e))
-            return
 
 #-----------------------------------------------------------------------------
 # Main Program
 #-----------------------------------------------------------------------------
-logger = logging.getLogger('GRAVATAR')
+logger = logging.getLogger('Gravatar')
 
 def lookup():
     logger.info('Starting Gravatar lookup.')
-    user_queue = multiprocessing.Queue()
-    result_queue = multiprocessing.Queue()
-    procs = []
-
+    
     # Load targets from the database.
     count = 0
-    logger.info('Loading screen names into queue.')
-    for target in alias.db.get_unchecked_targets('gravatar', 'all'):
+    logger.info('Getting unprocessed Gravatar usernames from database.')
+    for target in alias.db.get_unchecked_targets('gravatar', 'user'):
         count += 1
 
         # Skip targets with a . in them.
         if target.find('.') != -1:
             continue
 
-        user_queue.put({'user': target, 'gvuser': target})
+        resp = __lookup_user({'user': target, 'gvuser': target})
+        if resp is not None:
+            # 
+            # When the response is not None, the user has an alternate name on
+            # Gravatar. Lookup that name instead.
+            __lookup_user(resp)
 
-    logger.info('Loaded {0} targets into the queue.'.format(count))
+        if count % 1000 == 0:
+            logger.info('Processed {0} Gravatar users.'.format(count))
 
-    for i in range(4):
-        p = multiprocessing.Process(target=__worker, args=(user_queue,
-                                                         result_queue))
-        procs.append(p)
-        p.start()
-
-
-    # Create a thread to write the results to the file.
-    w = multiprocessing.Process(target=__writer, args=(result_queue,))
-    procs.append(w)
-    w.start()
-
-    # Wait for all worker processes to finish
-    try:
-        for p in procs:
-            p.join()
-    except KeyboardInterrupt:
-        for p in procs:
-            p.terminate()
-            p.join()
-
+    logger.info('Processed {0} Gravatar users.'.format(count))
     logger.info('Finished Gravatar lookup.')
+
+    return None
