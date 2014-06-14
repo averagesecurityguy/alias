@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ ! -d "log" ]; then
+	echo 'Creating log directory.'
+	mkdir log
+fi
+
 echo 'Starting Redis server.'
 echo '/usr/local/bin/redis-server conf/redis.conf > /dev/null 2>&1 &'
 /usr/local/bin/redis-server conf/redis.conf  > /dev/null 2>&1 &
