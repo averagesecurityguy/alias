@@ -79,7 +79,7 @@ def __get_twitter_connection(cfg):
 #-----------------------------------------------------------------------------
 # Lookup Method
 #-----------------------------------------------------------------------------
-logger = logging.getLogger('TWITTER')
+logger = logging.getLogger('Twitter')
 
 def lookup():
     logger.info('Starting Twitter lookup.')
@@ -89,6 +89,8 @@ def lookup():
     tw = __get_twitter_connection(cfg)
     count = 0
     users = []
+    logger.info('Getting unprocessed Twitter usernames from database.')
+
     for target in alias.db.get_unchecked_targets('twitter', 'user'):
         count += 1
         users.append(target)
@@ -103,7 +105,8 @@ def lookup():
             users = []
 
         if count % 1000 == 0:
-            logger.info('Processed {0} targets.'.format(count))
+            logger.info('Processed {0} Twitter users.'.format(count))
             tw = __get_twitter_connection(cfg)
 
     logger.info('Twitter lookup complete.')
+    return None
