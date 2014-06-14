@@ -20,7 +20,7 @@ def init_worker():
 # Configure logging for the lookup service and all the modules.
 log_file = os.path.join('log', 'alias.log')
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.WARNING,
     filename=log_file
 )
 
