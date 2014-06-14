@@ -15,6 +15,11 @@ app = flask.Flask(__name__)
 def index():
     return flask.render_template('index.html')
 
+@app.route("/about")
+def about():
+    return flask.render_template('about.html')
+
+
 @app.route("/targets")
 def targets():
     targets = sorted(alias.db.get_targets_with_data())
