@@ -12,6 +12,10 @@ Installation
 ------------
 git clone https://github.com/averagesecurityguy/alias
 
+Configuration
+-------------
+Rename and edit the conf/alias.conf.template and conf/redis.conf.template files as needed. You must add the Twitter and Github OAuth keys to retrieve data from those services.
+
 Server Management
 -----------------
 start_alias - Starts the Redis server, the alias web server, and the lookup services.
